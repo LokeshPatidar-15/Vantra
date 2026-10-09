@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers import auth
+
 app = FastAPI(title="Vantra API")
 
 # Allow the frontend (running on a different port) to call this backend
@@ -11,9 +13,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
+
+
 @app.get("/")
 def read_root():
     return {"message": "Vantra backend is running"}
+
 
 @app.get("/api/health")
 def health_check():
