@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { getMe, login } from "../api";
 import AuthLayout from "../components/AuthLayout";
 import Field from "../components/Field";
 import { ArrowRightIcon, LockIcon, MailIcon } from "../components/icons";
+import { useAuthStore } from "../store/authStore";
 
 export default function LoginPage() {
   const location = useLocation();
   const justSignedUp = Boolean(location.state?.justSignedUp);
+  const login = useAuthStore((state) => state.login);
 
   const [email, setEmail] = useState(location.state?.email ?? "");
   const [password, setPassword] = useState("");
@@ -16,44 +17,19 @@ export default function LoginPage() {
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Temporary: the token lives only in React state, so a refresh logs you out.
-  // Day 7 moves this into proper auth state with storage.
-  const [session, setSession] = useState(null);
-
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setInfo("");
     setLoading(true);
     try {
-      const { access_token } = await login(email.trim().toLowerCase(), password);
-      const user = await getMe(access_token); // proves the token works on a protected route
-      setSession({ token: access_token, user });
-      setPassword("");
+      await login(email.trim().toLowerCase(), password);
+      // On success the store becomes "authenticated" and PublicOnlyRoute redirects us.
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleLogout() {
-    setSession(null);
-    setPassword("");
-  }
-
-  if (session) {
-    return (
-      <AuthLayout title="You are logged in" subtitle="Token received and verified against /api/auth/me.">
-        <div className="alert alert-success">
-          Logged in as <strong>{session.user.email}</strong>
-        </div>
-        <div className="token-box">{session.token.slice(0, 40)}...</div>
-        <button className="btn-secondary" onClick={handleLogout}>
-          Log out
-        </button>
-      </AuthLayout>
-    );
   }
 
   return (
