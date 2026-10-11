@@ -1,21 +1,14 @@
-import { useState, useEffect } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-function App() {
-  const [status, setStatus] = useState("Checking backend...");
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 
-  useEffect(() => {
-    fetch("http://localhost:8000/api/health")
-      .then((res) => res.json())
-      .then((data) => setStatus(`Backend says: ${data.status} ✅`))
-      .catch(() => setStatus("Backend not reachable ❌"));
-  }, []);
-
+export default function App() {
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>Vantra</h1>
-      <p>{status}</p>
-    </div>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
-
-export default App;
