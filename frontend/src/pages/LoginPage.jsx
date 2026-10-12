@@ -10,6 +10,7 @@ export default function LoginPage() {
   const location = useLocation();
   const justSignedUp = Boolean(location.state?.justSignedUp);
   const login = useAuthStore((state) => state.login);
+  const sessionExpired = useAuthStore((state) => state.sessionExpired);
 
   const [email, setEmail] = useState(location.state?.email ?? "");
   const [password, setPassword] = useState("");
@@ -34,6 +35,9 @@ export default function LoginPage() {
 
   return (
     <AuthLayout title="Welcome back" subtitle="Log in to continue.">
+      {sessionExpired && !error && (
+        <div className="alert alert-info">Your session expired. Please log in again.</div>
+      )}
       {justSignedUp && !error && <div className="alert alert-success">Account created. Please log in.</div>}
       {error && <div className="alert alert-error">{error}</div>}
       {info && <div className="alert alert-info">{info}</div>}

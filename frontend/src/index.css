@@ -527,3 +527,26 @@ body {
 .mt-16 {
   margin-top: 16px;
 }
+
+/* ---------- password show/hide ---------- */
+
+.input-wrap input.has-toggle {
+  padding-right: 64px;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toggle-visibility:hover {
+  color: var(--gold);
+}

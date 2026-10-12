@@ -10,6 +10,7 @@ export const useAuthStore = create((set, get) => ({
   accessToken: null, // lives only in memory, never in localStorage
   user: null,
   status: "loading", // "loading" | "authenticated" | "unauthenticated"
+  sessionExpired: false, // true when a logged-in session ended because refresh failed
 
   refreshAccessToken: () => {
     if (!refreshPromise) {
@@ -28,7 +29,7 @@ export const useAuthStore = create((set, get) => ({
   login: async (email, password) => {
     const { access_token } = await loginRequest(email, password);
     const user = await getMe(access_token);
-    set({ accessToken: access_token, user, status: "authenticated" });
+    set({ accessToken: access_token, user, status: "authenticated", sessionExpired: false });
   },
 
   // Runs once when the app starts: if the refresh cookie is still valid, log the user back in.
@@ -42,12 +43,23 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // The user clicked "Log out".
   logout: async () => {
     try {
       await logoutRequest();
     } catch {
       // even if the call fails, clear the local state
     }
-    set({ accessToken: null, user: null, status: "unauthenticated" });
+    set({ accessToken: null, user: null, status: "unauthenticated", sessionExpired: false });
+  },
+
+  // The session died on its own (refresh failed): same cleanup, but tell the user why.
+  expireSession: async () => {
+    try {
+      await logoutRequest();
+    } catch {
+      // ignore
+    }
+    set({ accessToken: null, user: null, status: "unauthenticated", sessionExpired: true });
   },
 }));
