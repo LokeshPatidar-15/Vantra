@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -48,3 +49,42 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+# ---------- market data (Day 10) ----------
+
+class SymbolOut(BaseModel):
+    symbol: str
+    provider: str
+    timeframes: list[str]
+
+
+class CandleOut(BaseModel):
+    """Chart-ready candle. `time` is the candle's OPEN time in UNIX seconds (UTC)."""
+
+    time: int
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: Optional[float] = None
+
+
+class IngestRequest(BaseModel):
+    symbol: str
+    timeframe: str
+    count: int = Field(default=1000, ge=1, le=5000)
+
+
+class IngestResult(BaseModel):
+    symbol: str
+    timeframe: str
+    source: str
+    fetched: int
+    inserted: int
+    already_present: int
+    forming_dropped: int
+    market_closed_dropped: int
+    invalid_dropped: int
+    first_time: Optional[int] = None
+    last_time: Optional[int] = None

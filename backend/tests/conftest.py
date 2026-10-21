@@ -22,6 +22,8 @@ os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["SECRET_KEY"] = "test-secret-key-for-pytest-only-0123456789abcdef"
 os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"
 os.environ["CORS_ORIGINS"] = "http://localhost:5180"
+os.environ["ADMIN_EMAILS"] = "admin@vantra.dev"
+os.environ["TWELVE_DATA_API_KEY"] = ""  # tests must never see the real key
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -40,18 +42,28 @@ def _check_test_database():
         tables = conn.execute(
             text(
                 "select count(*) from information_schema.tables "
-                "where table_schema = 'public' and table_name = 'users'"
+                "where table_schema = 'public' and table_name in ('users', 'candles')"
             )
         ).scalar()
-        assert tables == 1, "users table missing. Run: psql vantra_test -f db/schema.sql"
+        assert tables == 2, "Tables missing. Run: psql vantra_test -f db/schema.sql"
 
 
 @pytest.fixture(autouse=True)
-def _clean_users():
-    """Every test starts with an empty users table."""
+def _clean_tables():
+    """Every test starts with empty users and candles tables."""
     with engine.begin() as conn:
-        conn.execute(text("truncate table users"))
+        conn.execute(text("truncate table users, candles"))
     yield
+
+
+@pytest.fixture(autouse=True)
+def _block_real_provider_calls(monkeypatch):
+    """No test may ever talk to the real Binance or Twelve Data."""
+
+    def blocked(*args, **kwargs):
+        raise AssertionError("A test tried to call a real provider API")
+
+    monkeypatch.setattr("app.market.providers.requests.get", blocked)
 
 
 @pytest.fixture()

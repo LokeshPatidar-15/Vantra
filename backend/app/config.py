@@ -31,3 +31,9 @@ CORS_ORIGINS = [
     for origin in os.getenv("CORS_ORIGINS", "http://localhost:5180").split(",")
     if origin.strip()
 ]
+
+# Market data (Day 10). Binance public candles need no key; Twelve Data does.
+TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
+
+# Emails (comma-separated) allowed to run admin actions such as candle ingestion.
+ADMIN_EMAILS = [email.strip().lower() for email in os.getenv("ADMIN_EMAILS", "").split(",") if email.strip()]

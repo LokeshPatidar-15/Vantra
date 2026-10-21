@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import CORS_ORIGINS
 from app.database import get_db
-from app.routers import auth
+from app.routers import auth, market
 
 app = FastAPI(title="Vantra API")
 
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(market.router)
 
 
 @app.get("/")
