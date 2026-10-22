@@ -550,3 +550,82 @@ body {
 .toggle-visibility:hover {
   color: var(--gold);
 }
+
+/* ---------- candlestick chart ---------- */
+
+.page-container.wide {
+  max-width: 1200px;
+}
+
+.panel + .panel,
+.chart-panel + .panel {
+  margin-top: 20px;
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.chart-sub {
+  margin-left: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.chart-price {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-change {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chart-change.up {
+  color: var(--bull);
+}
+
+.chart-change.down {
+  color: var(--bear);
+}
+
+.chart-box {
+  position: relative;
+  height: 460px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: rgba(18, 22, 31, 0.85);
+}
+
+.chart-overlay-error {
+  color: #ffb3b6;
+}
