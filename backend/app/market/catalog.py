@@ -8,12 +8,15 @@ class SymbolInfo:
     provider: str  # "binance" or "twelvedata"
     provider_symbol: str  # how that provider spells it
     is_24_7: bool  # crypto trades all week; forex and gold are closed on weekends
+    label: str  # human-friendly name for the market selector
+    price_precision: int  # decimals to show on the price axis
+    has_volume: bool  # forex and gold have no real volume
 
 
 SYMBOLS = {
-    "BTCUSDT": SymbolInfo("BTCUSDT", "binance", "BTCUSDT", True),
-    "XAUUSD": SymbolInfo("XAUUSD", "twelvedata", "XAU/USD", False),
-    "EURUSD": SymbolInfo("EURUSD", "twelvedata", "EUR/USD", False),
+    "BTCUSDT": SymbolInfo("BTCUSDT", "binance", "BTCUSDT", True, "Bitcoin / Tether", 2, True),
+    "XAUUSD": SymbolInfo("XAUUSD", "twelvedata", "XAU/USD", False, "Gold / US Dollar", 2, False),
+    "EURUSD": SymbolInfo("EURUSD", "twelvedata", "EUR/USD", False, "Euro / US Dollar", 5, False),
 }
 
 # timeframe -> length of one candle in seconds

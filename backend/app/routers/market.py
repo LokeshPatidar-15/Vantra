@@ -31,7 +31,14 @@ def _normalize(symbol: str, timeframe: str) -> tuple[str, str]:
 @router.get("/symbols", response_model=list[SymbolOut])
 def list_symbols(current_user: User = Depends(get_current_user)):
     return [
-        SymbolOut(symbol=info.symbol, provider=info.provider, timeframes=list(TIMEFRAME_SECONDS))
+        SymbolOut(
+            symbol=info.symbol,
+            label=info.label,
+            provider=info.provider,
+            price_precision=info.price_precision,
+            has_volume=info.has_volume,
+            timeframes=list(TIMEFRAME_SECONDS),
+        )
         for info in SYMBOLS.values()
     ]
 

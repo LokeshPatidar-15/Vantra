@@ -3,10 +3,13 @@ import { useEffect, useState } from "react";
 import { authedRequest } from "../authedRequest";
 
 // Loads candles from our own API. Loads again when symbol, timeframe or limit change.
+// Pass symbol = undefined while the list of markets is still loading: nothing is fetched yet.
 export function useCandles(symbol, timeframe, limit = 500) {
   const [state, setState] = useState({ candles: [], loading: true, error: "" });
 
   useEffect(() => {
+    if (!symbol) return undefined;
+
     let cancelled = false; // ignore an answer that arrives after the inputs changed or the page closed
     setState((current) => ({ ...current, loading: true, error: "" }));
 

@@ -55,7 +55,10 @@ class Token(BaseModel):
 
 class SymbolOut(BaseModel):
     symbol: str
+    label: str
     provider: str
+    price_precision: int
+    has_volume: bool
     timeframes: list[str]
 
 
