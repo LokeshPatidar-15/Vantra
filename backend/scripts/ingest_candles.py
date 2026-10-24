@@ -5,13 +5,14 @@ Run from the backend/ folder:
     python -m scripts.ingest_candles XAUUSD 1h 1000
 
 Arguments: SYMBOL TIMEFRAME COUNT   (COUNT from 1 to 5000)
+4h and 1d are not ingested: they are built from 1h candles.
 """
 import sys
 
 from app.database import SessionLocal
 from app.market.catalog import SYMBOLS, TIMEFRAME_SECONDS
 from app.market.providers import ProviderError
-from app.market.service import ingest_candles
+from app.market.service import DerivedTimeframeError, ingest_candles
 
 
 def main():
@@ -32,8 +33,8 @@ def main():
     with SessionLocal() as db:
         try:
             result = ingest_candles(db, symbol, timeframe, count)
-        except ProviderError as exc:
-            raise SystemExit(f"Provider error: {exc}")
+        except (ProviderError, DerivedTimeframeError) as exc:
+            raise SystemExit(f"Error: {exc}")
 
     for key, value in result.items():
         print(f"{key:16}: {value}")

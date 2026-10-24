@@ -59,6 +59,7 @@ class SymbolOut(BaseModel):
     provider: str
     price_precision: int
     has_volume: bool
+    day_start: str
     timeframes: list[str]
 
 

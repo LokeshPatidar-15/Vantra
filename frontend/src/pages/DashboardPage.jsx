@@ -4,13 +4,14 @@ import { useSearchParams } from "react-router-dom";
 import { authedRequest } from "../authedRequest";
 import CandleChart from "../components/CandleChart";
 import MarketSelect from "../components/MarketSelect";
+import TimeframeSelect from "../components/TimeframeSelect";
 import { useCandles } from "../hooks/useCandles";
 import { useSymbols } from "../hooks/useSymbols";
 import { useAuthStore } from "../store/authStore";
 import { decodeJwtPayload } from "../utils/jwt";
 
-// Day 13 adds a timeframe selector. For now it is fixed.
-const TIMEFRAME = "1h";
+const DEFAULT_TIMEFRAME = "1h";
+const BUILT_FROM_1H = ["4h", "1d"]; // the backend builds these from 1h candles
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -21,12 +22,14 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // The selected market lives in the URL (?symbol=XAUUSD): it survives a refresh and can be bookmarked.
+  // Market and timeframe live in the URL (?symbol=XAUUSD&timeframe=4h): they survive a refresh and can be bookmarked.
   const [params, setParams] = useSearchParams();
   const { symbols, loading: symbolsLoading, error: symbolsError } = useSymbols();
   const market = symbols.find((item) => item.symbol === params.get("symbol")) ?? symbols[0];
+  const requestedTimeframe = params.get("timeframe");
+  const timeframe = market?.timeframes.includes(requestedTimeframe) ? requestedTimeframe : DEFAULT_TIMEFRAME;
 
-  const { candles, loading: candlesLoading, error: candlesError } = useCandles(market?.symbol, TIMEFRAME, 500);
+  const { candles, loading: candlesLoading, error: candlesError } = useCandles(market?.symbol, timeframe, 500);
   const loading = symbolsLoading || candlesLoading;
   const chartError = symbolsError || candlesError;
 
@@ -34,14 +37,15 @@ export default function DashboardPage() {
   const last = candles[candles.length - 1];
   const previous = candles[candles.length - 2];
   const change = last && previous ? ((last.close - previous.close) / previous.close) * 100 : null;
+  const ingestTimeframe = BUILT_FROM_1H.includes(timeframe) ? "1h" : timeframe;
 
   const payload = accessToken ? decodeJwtPayload(accessToken) : null;
   const expiresAt = payload ? new Date(payload.exp * 1000).toLocaleTimeString() : "-";
 
-  function selectMarket(symbol) {
+  function setParam(name, value) {
     setParams((current) => {
-      const next = new URLSearchParams(current); // keep any other parameters
-      next.set("symbol", symbol);
+      const next = new URLSearchParams(current); // keep the other parameters
+      next.set(name, value);
       return next;
     });
   }
@@ -79,11 +83,16 @@ export default function DashboardPage() {
         <section className="panel chart-panel">
           <div className="chart-header">
             <div className="chart-header-left">
-              {market && <MarketSelect symbols={symbols} value={market.symbol} onChange={selectMarket} />}
-              <span className="chart-sub">
-                {TIMEFRAME} · times in UTC
-                {market && !market.has_volume ? " · no volume data for this market" : ""}
-              </span>
+              {market && (
+                <>
+                  <MarketSelect symbols={symbols} value={market.symbol} onChange={(value) => setParam("symbol", value)} />
+                  <TimeframeSelect
+                    timeframes={market.timeframes}
+                    value={timeframe}
+                    onChange={(value) => setParam("timeframe", value)}
+                  />
+                </>
+              )}
             </div>
             {last && (
               <div className="chart-price">
@@ -98,14 +107,22 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {market && (
+            <p className="chart-note">
+              Times in UTC
+              {!market.has_volume ? " · no volume data for this market" : ""}
+              {BUILT_FROM_1H.includes(timeframe) ? ` · ${timeframe} candles are built from 1h; the day starts at ${market.day_start}` : ""}
+            </p>
+          )}
+
           <div className="chart-box">
             <CandleChart candles={candles} precision={precision} />
             {loading && <div className="chart-overlay">Loading candles...</div>}
             {!loading && chartError && <div className="chart-overlay chart-overlay-error">{chartError}</div>}
             {!loading && !chartError && market && candles.length === 0 && (
               <div className="chart-overlay">
-                No candles stored for {market.symbol} {TIMEFRAME} yet. Run: python -m scripts.ingest_candles{" "}
-                {market.symbol} {TIMEFRAME} 2000
+                No candles stored for {market.symbol} {timeframe} yet. Run: python -m scripts.ingest_candles{" "}
+                {market.symbol} {ingestTimeframe} 2000
               </div>
             )}
           </div>

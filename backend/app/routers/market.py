@@ -5,7 +5,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_admin
 from app.market.catalog import SYMBOLS, TIMEFRAME_SECONDS
 from app.market.providers import ProviderError
-from app.market.service import get_candles, ingest_candles
+from app.market.service import DerivedTimeframeError, get_candles, ingest_candles
 from app.models import User
 from app.schemas import CandleOut, IngestRequest, IngestResult, SymbolOut
 
@@ -37,6 +37,7 @@ def list_symbols(current_user: User = Depends(get_current_user)):
             provider=info.provider,
             price_precision=info.price_precision,
             has_volume=info.has_volume,
+            day_start=info.day_start_label,
             timeframes=list(TIMEFRAME_SECONDS),
         )
         for info in SYMBOLS.values()
@@ -55,14 +56,14 @@ def read_candles(
     symbol, timeframe = _normalize(symbol, timeframe)
     return [
         CandleOut(
-            time=int(row.open_time.timestamp()),
-            open=row.open,
-            high=row.high,
-            low=row.low,
-            close=row.close,
-            volume=row.volume,
+            time=int(candle["open_time"].timestamp()),
+            open=candle["open"],
+            high=candle["high"],
+            low=candle["low"],
+            close=candle["close"],
+            volume=candle["volume"],
         )
-        for row in get_candles(db, symbol, timeframe, limit)
+        for candle in get_candles(db, symbol, timeframe, limit)
     ]
 
 
@@ -76,5 +77,7 @@ def ingest(
     symbol, timeframe = _normalize(payload.symbol, payload.timeframe)
     try:
         return ingest_candles(db, symbol, timeframe, payload.count)
+    except DerivedTimeframeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     except ProviderError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
