@@ -713,3 +713,51 @@ body {
   font-size: 12.5px;
   color: var(--text-muted);
 }
+
+/* ---------- live status badge ---------- */
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-alt);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.live-badge.live {
+  color: var(--bull);
+}
+
+.live-badge.live .live-dot {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+.live-badge.delayed {
+  color: var(--gold);
+}
+
+.live-badge.unavailable {
+  color: var(--bear);
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

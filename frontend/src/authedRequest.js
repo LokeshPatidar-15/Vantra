@@ -1,5 +1,6 @@
 import { request } from "./api";
 import { useAuthStore } from "./store/authStore";
+import { decodeJwtPayload } from "./utils/jwt";
 
 // Use this for every API call that needs a logged-in user.
 export async function authedRequest(path, options = {}) {
@@ -19,4 +20,12 @@ export async function authedRequest(path, options = {}) {
     if (err.status === 401) await expireSession(); // refresh failed too: the session is over
     throw err;
   }
+}
+
+// For things that are not plain requests (like a WebSocket): a token that is valid for at least 30 more seconds.
+export async function getFreshAccessToken() {
+  const { accessToken, refreshAccessToken } = useAuthStore.getState();
+  const payload = accessToken ? decodeJwtPayload(accessToken) : null;
+  const expiresSoon = !payload || payload.exp * 1000 < Date.now() + 30_000;
+  return expiresSoon ? refreshAccessToken() : accessToken;
 }

@@ -3,15 +3,18 @@ import { useSearchParams } from "react-router-dom";
 
 import { authedRequest } from "../authedRequest";
 import CandleChart from "../components/CandleChart";
+import LiveBadge from "../components/LiveBadge";
 import MarketSelect from "../components/MarketSelect";
 import TimeframeSelect from "../components/TimeframeSelect";
 import { useCandles } from "../hooks/useCandles";
+import { useLiveCandle } from "../hooks/useLiveCandle";
 import { useSymbols } from "../hooks/useSymbols";
 import { useAuthStore } from "../store/authStore";
 import { decodeJwtPayload } from "../utils/jwt";
 
 const DEFAULT_TIMEFRAME = "1h";
 const BUILT_FROM_1H = ["4h", "1d"]; // the backend builds these from 1h candles
+const NOTE_MODES = ["delayed", "unavailable", "closed_market"]; // live modes that deserve an explanation
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -30,13 +33,18 @@ export default function DashboardPage() {
   const timeframe = market?.timeframes.includes(requestedTimeframe) ? requestedTimeframe : DEFAULT_TIMEFRAME;
 
   const { candles, loading: candlesLoading, error: candlesError } = useCandles(market?.symbol, timeframe, 500);
+  const live = useLiveCandle(market?.symbol, timeframe);
   const loading = symbolsLoading || candlesLoading;
   const chartError = symbolsError || candlesError;
+  const liveCandle = loading ? null : live.candle; // wait until the closed candles are on the chart
 
   const precision = market?.price_precision ?? 2;
-  const last = candles[candles.length - 1];
-  const previous = candles[candles.length - 2];
-  const change = last && previous ? ((last.close - previous.close) / previous.close) * 100 : null;
+  const lastClosed = candles[candles.length - 1];
+  const previousClosed = candles[candles.length - 2];
+  const price = liveCandle ? liveCandle.close : lastClosed?.close;
+  const reference =
+    liveCandle && lastClosed && liveCandle.time > lastClosed.time ? lastClosed.close : previousClosed?.close;
+  const change = price != null && reference ? ((price - reference) / reference) * 100 : null;
   const ingestTimeframe = BUILT_FROM_1H.includes(timeframe) ? "1h" : timeframe;
 
   const payload = accessToken ? decodeJwtPayload(accessToken) : null;
@@ -91,12 +99,13 @@ export default function DashboardPage() {
                     value={timeframe}
                     onChange={(value) => setParam("timeframe", value)}
                   />
+                  <LiveBadge mode={live.mode} detail={live.detail} />
                 </>
               )}
             </div>
-            {last && (
+            {price != null && (
               <div className="chart-price">
-                {last.close.toFixed(precision)}
+                {price.toFixed(precision)}
                 {change !== null && (
                   <span className={change >= 0 ? "chart-change up" : "chart-change down"}>
                     {change >= 0 ? "+" : ""}
@@ -112,11 +121,12 @@ export default function DashboardPage() {
               Times in UTC
               {!market.has_volume ? " · no volume data for this market" : ""}
               {BUILT_FROM_1H.includes(timeframe) ? ` · ${timeframe} candles are built from 1h; the day starts at ${market.day_start}` : ""}
+              {NOTE_MODES.includes(live.mode) && live.detail ? ` · ${live.detail}` : ""}
             </p>
           )}
 
           <div className="chart-box">
-            <CandleChart candles={candles} precision={precision} />
+            <CandleChart candles={candles} precision={precision} liveCandle={liveCandle} />
             {loading && <div className="chart-overlay">Loading candles...</div>}
             {!loading && chartError && <div className="chart-overlay chart-overlay-error">{chartError}</div>}
             {!loading && !chartError && market && candles.length === 0 && (

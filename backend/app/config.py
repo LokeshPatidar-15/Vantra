@@ -37,3 +37,6 @@ TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
 
 # Emails (comma-separated) allowed to run admin actions such as candle ingestion.
 ADMIN_EMAILS = [email.strip().lower() for email in os.getenv("ADMIN_EMAILS", "").split(",") if email.strip()]
+
+# Live updates (Day 14). Forex and gold are polled from Twelve Data; each poll costs 1 API credit.
+FOREX_POLL_SECONDS = max(30, int(os.getenv("FOREX_POLL_SECONDS", "120")))
